@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Text, View, TextInput, StyleSheet } from 'react-native';
-import { createStore } from './src/store';
+import React from 'react';
+import { View, Text, Button, TextInput, StyleSheet } from 'react-native';
+import { createStore } from './src/store/store';
+import { StoreProvider, useDispatch, useStore } from './src/store/react';
 
-const store = createStore(
+type AppState = {
+  name: string;
+  age: number;
+};
+
+const store = createStore<AppState>(
   { name: 'Clinton', age: 0 },
   (state, action) => {
     switch (action.type) {
@@ -16,43 +22,29 @@ const store = createStore(
   }
 );
 
-export default function App() {
-  const [state, setState] = useState(store.getState());
-  const [inputName, setInputName] = useState('');
-
-  useEffect(() => {
-    const unsubscribe = store.subscribe(() => {
-      const newState = store.getState();
-      console.log(' Store Updated:', newState);
-      setState(newState);
-    });
-
-    return () => unsubscribe();
-  }, []);
+function Profile() {
+  const name = useStore<AppState['name'], AppState>(s => s.name);
+  const age = useStore<AppState['age'], AppState>(s => s.age);
+  const dispatch = useDispatch<AppState>();
+  const [input, setInput] = React.useState('');
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Clinton's Implementation</Text>
-      <Text style={styles.info}>Name: {state.name}</Text>
-      <Text style={styles.info}>Age: {state.age}</Text>
-
-      <Button
-        title="Increment Age"
-        onPress={() => store.dispatch({ type: 'incremented_age' })}
-      />
-
+      <Text>Name: {name}</Text>
+      <Text>Age: {age}</Text>
+      <Button title="Increment Age" onPress={() => dispatch({ type: 'incremented_age' })} />
       <TextInput
         style={styles.input}
-        placeholder="Enter a new name"
-        value={inputName}
-        onChangeText={setInputName}
+        placeholder="Enter name"
+        value={input}
+        onChangeText={setInput}
       />
       <Button
         title="Change Name"
         onPress={() => {
-          if (inputName.trim() !== '') {
-            store.dispatch({ type: 'changed_name', nextName: inputName.trim() });
-            setInputName('');
+          if (input.trim()) {
+            dispatch({ type: 'changed_name', nextName: input.trim() });
+            setInput('');
           }
         }}
       />
@@ -60,18 +52,15 @@ export default function App() {
   );
 }
 
+export default function App() {
+  return (
+    <StoreProvider store={store}>
+      <Profile />
+    </StoreProvider>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20
-  },
-  header: {
-    fontSize: 24, marginBottom: 20, fontWeight: 'bold'
-  },
-  info: {
-    fontSize: 18, marginBottom: 10
-  },
-  input: {
-    borderWidth: 1, borderColor: '#ccc', padding: 10, width: '100%',
-    marginTop: 20, marginBottom: 10, borderRadius: 5
-  }
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  input: { borderWidth: 1, padding: 8, width: 200, marginTop: 10 }
 });

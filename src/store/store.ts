@@ -1,5 +1,5 @@
-type Action = { type: string } & Record<string, any>;
-type Reducer<S> = (currentState: S, action: Action) => S;
+export type Action = { type: string } & Record<string, any>;
+export type Reducer<S> = (currentState: S, action: Action) => S;
 
 export function createStore<S extends Record<string, any>>(
   initialState: S,
